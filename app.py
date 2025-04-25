@@ -1,33 +1,43 @@
 import streamlit as st
 import joblib
-import pandas as pd
+import numpy as np
 
-# Load the trained pipeline model
-pipeline = joblib.load('model_pipeline.pkl')
+# Load the trained model pipeline
+model = joblib.load('model_pipeline.pkl')
 
-st.title("AQI Predictor")
+# AQI category function
+def get_aqi_category(aqi):
+    if aqi <= 50:
+        return "Good"
+    elif aqi <= 100:
+        return "Moderate"
+    elif aqi <= 150:
+        return "Unhealthy for Sensitive Groups"
+    elif aqi <= 200:
+        return "Unhealthy"
+    elif aqi <= 300:
+        return "Very Unhealthy"
+    else:
+        return "Hazardous"
 
-# Inputs for the user to enter
-no2 = st.number_input("NO2 AQI Value", min_value=0.0, step=1.0)
-ozone = st.number_input("Ozone AQI Value", min_value=0.0, step=1.0)
-co = st.number_input("CO AQI Value", min_value=0.0, step=1.0)
-pm25 = st.number_input("PM2.5 AQI Value", min_value=0.0, step=1.0)
-city = st.text_input("City Name")
-country = st.text_input("Country Name")
+# Streamlit app
+st.title("🌍 AQI Predictor")
 
+st.write("Enter pollutant levels and your city to predict AQI:")
+
+# Input fields
+no2 = st.number_input("NO2 AQI", min_value=0.0)
+ozone = st.number_input("Ozone AQI", min_value=0.0)
+co = st.number_input("CO AQI", min_value=0.0)
+pm25 = st.number_input("PM2.5 AQI", min_value=0.0)
+city = st.text_input("City")
+country = st.text_input("Country")
+
+# Predict button
 if st.button("Predict AQI"):
-    # Creating a DataFrame for prediction
-    input_data = pd.DataFrame([{
-        "NO2 AQI Value": no2,
-        "Ozone AQI Value": ozone,
-        "CO AQI Value": co,
-        "PM2.5 AQI Value": pm25,
-        "City": city,
-        "Country": country
-    }])
+    input_data = np.array([[no2, ozone, co, pm25, city, country]])
+    prediction = model.predict(input_data)[0]
+    category = get_aqi_category(prediction)
 
-    # Making the prediction
-    prediction = pipeline.predict(input_data)[0]
-
-    # Displaying the result
-    st.write(f"Predicted AQI: {prediction:.2f}")
+    st.success(f"🌡️ Predicted AQI: **{round(prediction, 2)}**")
+    st.info(f"🏷️ Air Quality Category: **{category}**")
